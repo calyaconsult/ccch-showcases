@@ -1,1 +1,733 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-V50JBEYBBH"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-V50JBEYBBH');
+</script>
+<title>Traffic Monitoring Dashboard mit Live Daten</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f5f7fa;
+    color: #1a2332;
+    padding: 24px;
+    line-height: 1.5;
+  }
+
+  .dashboard { max-width: 1400px; margin: 0 auto; }
+
+  /* Header */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 28px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #e1e8ed;
+  }
+
+  .header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #0f1e2e;
+    letter-spacing: -0.5px;
+  }
+
+  .header .subtitle {
+    font-size: 14px;
+    color: #6b7c8f;
+    margin-top: 4px;
+  }
+
+  .date-badge {
+    background: #fff;
+    padding: 10px 18px;
+    border-radius: 8px;
+    border: 1px solid #e1e8ed;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a2332;
+  }
+
+  /* KPI Cards */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .kpi-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 22px;
+    border: 1px solid #e1e8ed;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+  }
+
+  .kpi-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #6b7c8f;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  .kpi-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: #0f1e2e;
+    letter-spacing: -1px;
+    margin-bottom: 4px;
+  }
+
+  .kpi-comparison {
+    font-size: 13px;
+    color: #6b7c8f;
+    margin-bottom: 12px;
+  }
+
+  .kpi-trends {
+    display: flex;
+    gap: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #f0f3f6;
+  }
+
+  .trend {
+    flex: 1;
+    font-size: 12px;
+  }
+
+  .trend-label {
+    color: #6b7c8f;
+    margin-bottom: 2px;
+  }
+
+  .trend-value {
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  .positive { color: #10a36b; }
+  .negative { color: #e63946; }
+  .neutral { color: #6b7c8f; }
+
+  .arrow::before {
+    content: '';
+    display: inline-block;
+    width: 0;
+    height: 0;
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+  .arrow.positive::before {
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-bottom: 6px solid #10a36b;
+  }
+  .arrow.negative::before {
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 6px solid #e63946;
+  }
+
+  /* Forecast Card (Featured) */
+  .forecast-card {
+    background: linear-gradient(135deg, #1e3a5f 0%, #2a5080 100%);
+    color: #fff;
+    border-radius: 12px;
+    padding: 28px;
+    margin-bottom: 28px;
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 32px;
+    align-items: center;
+  }
+
+  .forecast-header h2 {
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.8;
+    margin-bottom: 8px;
+  }
+
+  .forecast-header p {
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .forecast-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+
+  .forecast-metric .label {
+    font-size: 11px;
+    text-transform: uppercase;
+    opacity: 0.7;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+
+  .forecast-metric .value {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+
+  /* Comparison Table */
+  .comparison-section {
+    background: #fff;
+    border-radius: 12px;
+    padding: 24px;
+    border: 1px solid #e1e8ed;
+  }
+
+  .section-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: #0f1e2e;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+
+  th {
+    text-align: left;
+    padding: 12px 8px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: #6b7c8f;
+    border-bottom: 2px solid #f0f3f6;
+    font-weight: 600;
+  }
+
+  th.numeric, td.numeric { text-align: right; }
+
+  td {
+    padding: 14px 8px;
+    border-bottom: 1px solid #f0f3f6;
+  }
+
+  tr:last-child td { border-bottom: none; }
+
+  td.label-cell {
+    font-weight: 600;
+    color: #1a2332;
+  }
+
+  .change-pill {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .change-pill.positive {
+    background: #e6f7f0;
+    color: #0a8754;
+  }
+
+  .change-pill.negative {
+    background: #fce8ea;
+    color: #c1272d;
+  }
+
+  /* Sparkline mock */
+  .sparkline {
+    display: inline-block;
+    width: 80px;
+    height: 24px;
+    vertical-align: middle;
+    margin-left: 8px;
+  }
+
+  .small {
+    font-size: 65%;
+    color: #ff871e;
+  }
+  .small::before {
+    content: '➽ ';
+  }
+  .dashboard-toggle {
+    background: #ff871e;
+    border: 1px solid #e1e8ed;
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a2332;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+
+  .dashboard-toggle:hover {
+    background: #f8fafc;
+    border-color: #d0d9e2;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+
+  .dashboard-toggle:active {
+    transform: scale(0.98);
+  }
+
+  .dashboard-toggle.active {
+    background: #1e3a5f;
+    color: white;
+    border-color: #1e3a5f;
+  }
+
+  .dashboard-toggle.active:hover {
+    background: #2a5080;
+  }
+  @media (max-width: 768px) {
+    .forecast-card { grid-template-columns: 1fr; }
+    .forecast-metrics { grid-template-columns: 1fr; gap: 16px; }
+    .header { flex-direction: column; align-items: flex-start; gap: 12px; }
+  }
+</style>
+</head>
+<body>
+<div class="dashboard">
+
+  <header class="header">
+    <div>
+      <h1>Traffic Monitoring</h1>
+      <div class="subtitle">Tages-Übersicht der Website-Performance (Vortag)</div>
+    </div>
+    <button id="populate-values-btn" class="dashboard-toggle"><span class="toggle-text">Populate Values</span></button>
+    <div class="date-badge">📅 <span id="cal-date">15. April 2026</span></div>
+  </header>
+
+  <!-- Featured Forecast -->
+  <section class="forecast-card">
+    <div class="forecast-header">
+      <h2>Prognose Ende <span id="prg-date"></span></h2>
+      <p><span id="prg-text">Auf Kurs für ein Rekord­wachstum</span></p>
+    </div>
+    <div class="forecast-metrics">
+      <div class="forecast-metric">
+        <div class="label">Seitenaufrufe</div>
+        <div class="value" id="progn-pv">1,341,103</div>
+      </div>
+      <div class="forecast-metric">
+        <div class="label">Besuche</div>
+        <div class="value" id="progn-vi">536,430</div>
+      </div>
+      <div class="forecast-metric">
+        <div class="label">Besucher</div>
+        <div class="value" id="progn-uc">242,057</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Primary KPIs -->
+  <section class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">Seitenaufrufe gestern</div>
+      <div class="kpi-value" id="daily-pv">45,665</div>
+      <div class="kpi-comparison">Ø 7 Tage: <span  id="avg-pv">44,703</span></div>
+      <div class="kpi-trends">
+        <div class="trend">
+          <div class="trend-label">vs. Vormonat</div>
+          <div class="trend-value diff arrow positive" id="diff-pm-pv">+8.5%</div>
+        </div>
+        <div class="trend">
+          <div class="trend-label">vs. Vorjahr</div>
+          <div class="trend-value diff arrow positive" id="diff-py-pv">+85.9%</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-label">Besuche gestern</div>
+      <div class="kpi-value" id="daily-vi">18,716</div>
+      <div class="kpi-comparison">Ø 7 Tage: <span id="avg-vi">17,881</span></div>
+      <div class="kpi-trends">
+        <div class="trend">
+          <div class="trend-label">vs. Vormonat</div>
+          <div class="trend-value diff arrow positive" id="diff-pm-vi">+68.5%</div>
+        </div>
+        <div class="trend">
+          <div class="trend-label">vs. Vorjahr</div>
+          <div class="trend-value diff arrow positive" id="diff-py-vi">+135.9%</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-label">Besucher gestern</div>
+      <div class="kpi-value" id="daily-uc">8,200</div>
+      <div class="kpi-comparison">Ø 7 Tage: <span id="avg-uc">8,069</span></div>
+      <div class="kpi-trends">
+        <div class="trend">
+          <div class="trend-label">vs. Vormonat</div>
+          <div class="trend-value diff arrow positive" id="diff-pm-uc">+83.2%</div>
+        </div>
+        <div class="trend">
+          <div class="trend-label">vs. Vorjahr</div>
+          <div class="trend-value diff arrow positive" id="diff-py-uc">+120.5%</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-label">Engagement (Aufrufe/Besucher)</div>
+      <div class="kpi-value" id="ratio-pvvi">5.6</div>
+      <!--div class="kpi-comparison" id="ratio-viuc">Besuche/Besucher: 2.3</div-->
+      <div class="kpi-trends">
+        <div class="trend">
+          <div class="trend-label">vs. Vormonat</div>
+          <div class="trend-value diff arrow negative" id="diff-pm-pvvi">−40.8%</div>
+        </div>
+        <div class="trend">
+          <div class="trend-label">vs. Vorjahr</div>
+          <div class="trend-value diff arrow negative" id="diff-py-pvvi">−15.7%</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-label">Besuchsfrequenz (Besuche/Besucher)</div>
+      <div class="kpi-value" id="ratio-viuc">2.3</div>
+      <!--div class="kpi-comparison" id="ratio-viuc">Besuche/Besucher: 2.3</div-->
+      <div class="kpi-trends">
+        <div class="trend">
+          <div class="trend-label">vs. Vormonat</div>
+          <div class="trend-value diff arrow negative" id="diff-pm-viuc">−40.8%</div>
+        </div>
+        <div class="trend">
+          <div class="trend-label">vs. Vorjahr</div>
+          <div class="trend-value diff arrow negative" id="diff-py-viuc">−15.7%</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Detailed Comparison -->
+  <section class="comparison-section">
+    <h3 class="section-title">Detailvergleich</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Zeitraum</th>
+          <th class="numeric">Seitenaufrufe</th>
+          <th class="numeric">Besuche</th>
+          <th class="numeric">Besucher</th>
+          <th class="numeric">Aufrufe / Besucher</th>
+          <th class="numeric">Besuche / Besucher</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="label-cell">Tageswert (<span id="tw-date">15.04.</span>)</td>
+          <td class="numeric" id="tw-pv">45,665</td>
+          <td class="numeric" id="tw-vi">18,716</td>
+          <td class="numeric" id="tw-uc">8,200</td>
+          <td class="numeric" id="tw-pvvi">5.6</td>
+          <td class="numeric" id="tw-viuc">2.3</td>
+        </tr>
+        <tr>
+          <td class="label-cell">Ø 7 Tage</td>
+          <td class="numeric" id="av-pv">44,703</td>
+          <td class="numeric" id="av-vi">17,881</td>
+          <td class="numeric" id="av-uc">8,069</td>
+          <td class="numeric" id="av-pvvi">5.5</td>
+          <td class="numeric" id="av-viuc">2.2</td>
+        </tr>
+        <tr>
+          <td class="label-cell">Summe Vormonat</td>
+          <td class="numeric" id="spm-pv">1,235,485</td>
+          <td class="numeric" id="spm-vi">318,281</td>
+          <td class="numeric" id="spm-uc">132,105</td>
+          <td class="numeric" id="spm-pvvi">-</td>
+          <td class="numeric" id="spm-viuc">-</td>
+        </tr>
+        <tr>
+          <td class="label-cell">Summe Vorjahr</td>
+          <td class="numeric" id="spy-pv">721,316</td>
+          <td class="numeric" id="spy-vi">227,364</td>
+          <td class="numeric" id="spy-uc">109,769</td>
+          <td class="numeric" id="spy-pvvi">-</td>
+          <td class="numeric" id="spy-viuc">-</td>
+        </tr>
+        <tr>
+          <td class="label-cell">Δ vs. Vormonat</td>
+          <td class="numeric"><span class="change-pill diff positive" id="dpm-pv">+8.5%</span></td>
+          <td class="numeric"><span class="change-pill diff positive" id="dpm-vi">+68.5%</span></td>
+          <td class="numeric"><span class="change-pill diff positive" id="dpm-uc">+83.2%</span></td>
+          <td class="numeric"><span class="change-pill diff negative" id="dpm-pvvi">−8.0%</span></td>
+          <td class="numeric"><span class="change-pill diff negative" id="dpm-viuc">−40.8%</span></td>
+        </tr>
+        <tr>
+          <td class="label-cell">Δ vs. Vorjahr</td>
+          <td class="numeric"><span class="change-pill diff positive" id="dpy-pv">+85.9%</span></td>
+          <td class="numeric"><span class="change-pill diff positive" id="dpy-vi">+135.9%</span></td>
+          <td class="numeric"><span class="change-pill diff positive" id="dpy-uc">+120.5%</span></td>
+          <td class="numeric"><span class="change-pill diff positive" id="dpy-pvvi">+7.0%</span></td>
+          <td class="numeric"><span class="change-pill diff negative" id="dpy-viuc">−15.7%</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+</div>
+<script>
+// Helpers
+const round2 = (x) => Math.round(x * 100) / 100;
+const delta = (x, y) => {
+  if (!isFinite(x) || !isFinite(y) || y === 0) return 0;
+  return x / y - 1;
+};
+
+// Format absolute values as integers with thousands separators (de-CH uses apostrophe)
+const formatAbsolute = (x) => {
+  if (typeof x !== "number" || !isFinite(x)) return x;
+  return Math.round(Math.abs(x)).toLocaleString("de-CH");
+};
+
+// Format a delta (decimal ratio like 0.157) as a signed percentage string ("+15.7%")
+const formatDelta = (x) => {
+  if (typeof x !== "number" || !isFinite(x)) return "-";
+  const pct = x * 100;
+  return (pct > 0 ? "+" : "") + pct.toFixed(1) + "%";
+};
+
+// Default (empty) values
+const emptyValues = {
+  "cal-date": "dd Monat Jahr",
+  "prg-date": "Monat",
+  "tw-date": "dd.mm",
+  "prg-text": "Klicken Sie auf 'Populate Values'",
+  "progn-pv": 0, "progn-vi": 0, "progn-uc": 0,
+  "daily-pv": 0, "avg-pv": 0, "diff-pm-pv": 0, "diff-py-pv": 0,
+  "daily-vi": 0, "avg-vi": 0, "diff-pm-vi": 0, "diff-py-vi": 0,
+  "daily-uc": 0, "avg-uc": 0, "diff-pm-uc": 0, "diff-py-uc": 0,
+  "ratio-pvvi": 0, "diff-pm-pvvi": 0, "diff-py-pvvi": 0,
+  "ratio-viuc": 0, "diff-pm-viuc": 0, "diff-py-viuc": 0,
+  "tw-pv": 0, "tw-vi": 0, "tw-uc": 0, "tw-pvvi": "-", "tw-viuc": "-",
+  "av-pv": 0, "av-vi": 0, "av-uc": 0, "av-pvvi": "-", "av-viuc": "-",
+  "spm-pv": 0, "spm-vi": 0, "spm-uc": 0, "spm-pvvi": "-", "spm-viuc": "-",
+  "spy-pv": 0, "spy-vi": 0, "spy-uc": 0, "spy-pvvi": "-", "spy-viuc": "-",
+  "dpm-pv": "-", "dpm-vi": "-", "dpm-uc": "-", "dpm-pvvi": "-", "dpm-viuc": "-",
+  "dpy-pv": "-", "dpy-vi": "-", "dpy-uc": "-", "dpy-pvvi": "-", "dpy-viuc": "-",
+};
+
+const GERMAN_MONTHS = [
+  "Januar", "Februar", "März", "April", "Mai", "Juni",
+  "Juli", "August", "September", "Oktober", "November", "Dezember"
+];
+
+function getMonth(dt) {
+  const monthName = dt.m.split(" ")[0];
+  const idx = GERMAN_MONTHS.indexOf(monthName);
+  const monthNum = idx >= 0 ? idx + 1 : "?";
+  const day = String(dt.d).padStart(2, "0");
+  const mm = typeof monthNum === "number" ? String(monthNum).padStart(2, "0") : monthNum;
+  return `${day}.${mm}`;
+}
+
+// DOM updates
+function applyValues(values) {
+  for (const [id, value] of Object.entries(values)) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+  }
+}
+
+function clearPositiveNegativeClasses() {
+  const elements = document.querySelectorAll(".positive, .negative");
+  elements.forEach((el) => el.classList.remove("positive", "negative"));
+  return elements.length;
+}
+
+async function populateDashboard() {
+  const url = "../data/combined_data.json";
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Response status: ${response.status}`);
+    }
+
+    const liveData = await response.json();
+
+    // Derived values
+    const now = new Date();
+    // Use yesterday as "days elapsed" since today's data isn't complete
+    const daysElapsed = Math.max(1, now.getDate() - 1);
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+
+    const progPv = (liveData.pis_sum / daysElapsed) * daysInMonth;
+    const progVi = (liveData.vis_sum / daysElapsed) * daysInMonth;
+    const progUc = (liveData.ucs_sum / daysElapsed) * daysInMonth;
+    const progPvvi = progPv / progVi;
+    const progViuc = progVi / progUc;
+
+    const prevMonthPvvi = liveData.pis_prev_month / liveData.vis_prev_month;
+    const prevMonthViuc = liveData.vis_prev_month / liveData.ucs_prev_month;
+    const prevYearPvvi  = liveData.pis_prev_year  / liveData.vis_prev_year;
+    const prevYearViuc  = liveData.vis_prev_year  / liveData.ucs_prev_year;
+
+    const ratioPvvi = round2(liveData.pis_last_day / liveData.vis_last_day);
+    const ratioViuc = round2(liveData.vis_last_day / liveData.ucs_last_day);
+
+    // Computed values (call as a function, not pass as one!)
+    const buildValues = (liveData) => ({
+      "cal-date": `${liveData["month"]}`,
+      "prg-date": liveData["month"].split(" ")[0],
+      "tw-date": getMonth({ d: liveData["dayspassed"], m: liveData["month"] }),
+      "prg-text": "Auf Kurs für ein Rekordwachstum",
+
+      "progn-pv": formatAbsolute(progPv),
+      "progn-vi": formatAbsolute(progVi),
+      "progn-uc": formatAbsolute(progUc),
+
+      "daily-pv": formatAbsolute(liveData.pis_last_day),
+      "avg-pv": formatAbsolute(liveData["avg-pi"]),
+      "diff-pm-pv": formatDelta(delta(progPv, liveData.pis_prev_month)),
+      "diff-py-pv": formatDelta(delta(progPv, liveData.pis_prev_year)),
+
+      "daily-vi": formatAbsolute(liveData.vis_last_day),
+      "avg-vi": formatAbsolute(liveData["avg-vi"]),
+      "diff-pm-vi": formatDelta(delta(progVi, liveData.vis_prev_month)),
+      "diff-py-vi": formatDelta(delta(progVi, liveData.vis_prev_year)),
+
+      "daily-uc": formatAbsolute(liveData.ucs_last_day),
+      "avg-uc": formatAbsolute(liveData["avg-uc"]),
+      "diff-pm-uc": formatDelta(delta(progUc, liveData.ucs_prev_month)),
+      "diff-py-uc": formatDelta(delta(progUc, liveData.ucs_prev_year)),
+
+      "ratio-pvvi": ratioPvvi,
+      "diff-pm-pvvi": formatDelta(delta(progPvvi, prevMonthPvvi)),
+      "diff-py-pvvi": formatDelta(delta(progPvvi, prevYearPvvi)),
+
+      "ratio-viuc": ratioViuc,
+      "diff-pm-viuc": formatDelta(delta(progViuc, prevMonthViuc)),
+      "diff-py-viuc": formatDelta(delta(progViuc, prevYearViuc)),
+
+      "tw-pv": formatAbsolute(liveData.pis_last_day),
+      "tw-vi": formatAbsolute(liveData.vis_last_day),
+      "tw-uc": formatAbsolute(liveData.ucs_last_day),
+      "tw-pvvi": ratioPvvi,
+      "tw-viuc": ratioViuc,
+
+      "av-pv": formatAbsolute(liveData["avg-pi"]),
+      "av-vi": formatAbsolute(liveData["avg-vi"]),
+      "av-uc": formatAbsolute(liveData["avg-uc"]),
+      "av-pvvi": round2(liveData["avg-pivi"]),
+      "av-viuc": round2(liveData["avg-viuc"]),
+
+      "spm-pv": formatAbsolute(liveData.pis_prev_month),
+      "spm-vi": formatAbsolute(liveData.vis_prev_month),
+      "spm-uc": formatAbsolute(liveData.ucs_prev_month),
+      "spm-pvvi": round2(prevMonthPvvi),
+      "spm-viuc": round2(prevMonthViuc),
+
+      "spy-pv": formatAbsolute(liveData.pis_prev_year),
+      "spy-vi": formatAbsolute(liveData.vis_prev_year),
+      "spy-uc": formatAbsolute(liveData.ucs_prev_year),
+      "spy-pvvi": round2(prevYearPvvi),
+      "spy-viuc": round2(prevYearViuc),
+
+      "dpm-pv": formatDelta(delta(progPv, liveData.pis_prev_month)),
+      "dpm-vi": formatDelta(delta(progVi, liveData.vis_prev_month)),
+      "dpm-uc": formatDelta(delta(progUc, liveData.ucs_prev_month)),
+      "dpm-pvvi": formatDelta(delta(progPvvi, prevMonthPvvi)),
+      "dpm-viuc": formatDelta(delta(progViuc, prevMonthViuc)),
+
+      "dpy-pv": formatDelta(delta(progPv, liveData.pis_prev_year)),
+      "dpy-vi": formatDelta(delta(progVi, liveData.vis_prev_year)),
+      "dpy-uc": formatDelta(delta(progUc, liveData.ucs_prev_year)),
+      "dpy-pvvi": formatDelta(delta(progPvvi, prevYearPvvi)),
+      "dpy-viuc": formatDelta(delta(progViuc, prevYearViuc)),
+    });
+
+    applyValues(buildValues(liveData));   // <-- FIXED: actually call it
+    clearPositiveNegativeClasses();
+    const prgText = document.getElementById("prg-text");
+    if (prgText) prgText.classList.remove("small");
+    applyDiffClasses();
+  } catch (error) {
+    console.error(error.message);
+  }
+}
+
+function resetDashboard() {
+  applyValues(emptyValues);
+  const prgText = document.getElementById("prg-text");
+  if (prgText) prgText.classList.add("small");
+  clearPositiveNegativeClasses();
+}
+
+// Apply positive/negative classes to all .diff elements based on their (already formatted) text
+function applyDiffClasses() {
+  const diffElements = document.querySelectorAll(".diff");
+  diffElements.forEach((el) => {
+    const cleanText = el.textContent
+      .trim()
+      .replace(/−/g, "-")
+      .replace(/\+/g, "")
+      .replace(/%/g, "");
+    const value = parseFloat(cleanText);
+
+    el.classList.remove("positive", "negative");
+    if (!isNaN(value)) {
+      if (value > 0) el.classList.add("positive");
+      else if (value < 0) el.classList.add("negative");
+    }
+  });
+}
+
+// Init
+document.addEventListener("DOMContentLoaded", () => {
+  resetDashboard();
+
+  const toggleButton = document.getElementById("populate-values-btn");
+  if (!toggleButton) return;
+
+  let isPopulated = false;
+  toggleButton.addEventListener("click", function () {
+    if (isPopulated) {
+      resetDashboard();
+      this.querySelector(".toggle-text").textContent = "Populate Values";
+      this.classList.remove("active");
+    } else {
+      populateDashboard();
+      this.querySelector(".toggle-text").textContent = "Reset View";
+      this.classList.add("active");
+    }
+    isPopulated = !isPopulated;
+  });
+});
+</script>
+</body>
+</html>
 
